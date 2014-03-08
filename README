@@ -1,0 +1,73 @@
+= binary-gp =
+
+Recognize modified C style structure definitions to generate extractors & generators in C.
+
+== Example ==
+
+	# type u8;
+	# type be16;
+
+	struct name2 # id=rrr {
+		be16 fo;
+	};
+
+	struct name # id=foo {
+		u8 x;
+		u8 y # foo=y;
+		u8 z # foo=z,id=y;
+		struct name2 name2;
+		u8 x[2];
+		u8 y[2][5][2][5];
+	};
+
+== Definition ==
+
+	definitions := definitions ';' definition
+		     | definition
+	definition  := pragma-def
+		     | struct-def
+	pragma-def  := '#' pragma-def-specific
+	pragma-def-specific := 'type' TYPE_NAME ';'
+	struct-def := struct-def-hdr '{' members '}'
+	struct-def-hdr := 'struct' TYPE_NAME maybe-attrs
+	attrs := attrs ',' attr
+	       | attr
+	attr := ATTR_NAME '=' ATTR_VALUE
+	members := type MEMBER_NAME maybe-array maybe-attrs
+	maybe-array := dim dim
+		    |  dim
+		    |
+	dim := '[' UINT ']'
+	maybe-attrs := '#' attrs
+		    | /* nothing */
+	type := base_type | struct_type
+	struct_type := 'struct' TYPE_NAME
+	uint := DEC_UINT
+	      | HEX
+	      | OCT
+
+	NUM_IGNORES = _,
+	DEC_UINT = [1-9][0-9${NUM_IGNORES}]*
+	HEX = 0x[0-9${NUM_IGNORES}]*
+	OCT = 0[0-9${NUM_IGNORES}]*
+	ID_AND_DOLLARS = [a-zA-Z_$][a-zA-Z_$0-9]*
+	TYPE_NAME = ${ID_AND_DOLLARS}
+	ATTR_NAME = ${ID_AND_DOLLARS}
+	ATTR_VALUE = [^,]*
+
+== Requirements for "#type" s ==
+
+	Must define
+	- extract (take value ptr, array, length remaining, and return new array offset)
+	- encode  (take value, buffer, length remaining, and return new array offset)
+	- some storage method.
+
+== TODO ==
+
+define a way to handle things like
+	- length-defined lists (with length being some arbitrary determinant)
+	- specially-terminated lists
+	- optional terms included/excluded via a bit-vector
+	- optional terms included/excluded by special marker
+	- variable encoding based on value
+	- seperation of 'type' and 'encoding'
