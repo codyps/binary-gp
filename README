@@ -71,3 +71,4 @@ define a way to handle things like
 	- optional terms included/excluded by special marker
 	- variable encoding based on value
 	- seperation of 'type' and 'encoding'
+	  - types are really just compile-time values that we can operate on in restricted ways.
